@@ -1,0 +1,23 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install sudo and ufw
+      apt:
+        name:
+          - sudo
+          - ufw
+        state: present
+    - name: Add user to sudo
+      user:
+        name: myusername
+        groups: sudo
+        append: yes
+    - name: Setup UFW defaults and allow SSH
+      ufw:
+        rule: "{{ item.rule }}"
+        direction: "{{ item.direction | default(omit) }}"
+        default: "{{ item.default | default(omit) }}"
+      loop:
+        - { rule: 'allow', port: '22', proto: 'tcp' }
+        - { default: 'deny', direction: 'incoming' }
+        - { default: 'allow', direction: 'outgoing' }
