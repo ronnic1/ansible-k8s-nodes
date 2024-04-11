@@ -1,0 +1,30 @@
+- hosts: master
+  become: yes
+  tasks:
+    - name: Install Kubernetes signing key and repository
+      block:
+        - name: Add Kubernetes signing key
+          ansible.builtin.shell:
+            cmd: |
+              curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        - name: Add Kubernetes repository
+          ansible.builtin.lineinfile:
+            path: /etc/apt/sources.list.d/kubernetes.list
+            line: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /'
+            create: yes
+        - name: Update apt and install Kubernetes tools
+          apt:
+            name:
+              - kubelet
+              - kubeadm
+              - kubectl
+            state: present
+            update_cache: yes
+        - name: Hold Kubernetes packages
+          apt:
+            name: "{{ item }}"
+            state: hold
+          loop:
+            - kubelet
+            - kubeadm
+            - kubectl
